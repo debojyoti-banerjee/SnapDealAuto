@@ -1,30 +1,37 @@
-name: Azure Snapshot deletion
+name: Azure Snapshot Deletion
+
 on:
   push:
     branches:
       - main
+
 jobs:
-  cleanup Old Snapshot:
+  cleanup_old_snapshot:
+
     runs-on: ubuntu-latest
+
     env:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+
       SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
       THRESHOLD_DAYS: ${{ secrets.THRESHOLD_DAYS }}
+
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
 
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.13.9"
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    - name: Install Packages
-      run: |
-        pip install -r requirements.txt
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
 
-    - name: Snapshot cleaning
-      run: |
-        python delete_snapshots.py
+      - name: Install Packages
+        run: |
+          pip install -r requirements.txt
+
+      - name: Snapshot Cleaning
+        run: |
+          python snapdeal.py
