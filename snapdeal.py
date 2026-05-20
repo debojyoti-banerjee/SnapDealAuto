@@ -32,7 +32,7 @@ for snapshot in snapshots:
 
     creation_time = snapshot.time_created
 
-    age = (current_time - creation_time).days
+    age = (current_time - creation_time).total_seconds()/60
 
     if age > threshold_days:
 
