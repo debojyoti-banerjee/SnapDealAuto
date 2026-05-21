@@ -74,7 +74,7 @@ new_dataframe = pd.DataFrame(deleted_snapshots)
 
 final_dataframe = pd.concat([final_dataframe, new_dataframe],ignore_index=True)
 
-final_dataframe.to_excel(excel_file,index=False)
+final_dataframe.to_excel(excel_file,index=False,engine="openpyxl")
 
 with open(excel_file, "rb") as data:
     blob_client.upload_blob(data,overwrite=True)
