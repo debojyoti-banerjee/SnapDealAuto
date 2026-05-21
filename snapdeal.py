@@ -37,7 +37,7 @@ except Exception:
     print("No previous Excel found")
 
 if os.path.exists(excel_file):
-    final_dataframe = pd.read_excel(excel_file)
+    final_dataframe = pd.read_excel(excel_file,engine="openpyxl")
 else:
     final_dataframe = pd.DataFrame()
 
