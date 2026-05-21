@@ -32,7 +32,7 @@ try:
     with open(excel_file, "wb") as file:
         download_stream = blob_client.download_blob()
         file.write(download_stream.readall())
-    print("Old Excel downloaded")
+    print("Old excel downloaded")
 except Exception:
     print("No previous Excel found")
 
