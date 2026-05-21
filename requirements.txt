@@ -1,2 +1,5 @@
 azure-identity
 azure-mgmt-compute
+azure-storage-blob
+pandas
+openpyxl
