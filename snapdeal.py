@@ -5,7 +5,6 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.compute import ComputeManagementClient
 from azure.storage.blob import BlobServiceClient
 
-
 subscription_id = os.environ["SUBSCRIPTION_ID"]
 
 threshold_minutes = int(os.environ["THRESHOLD_MINUTES"])
@@ -18,34 +17,21 @@ blob_name = "deleted_snapshots.xlsx"
 
 excel_file = "deleted_snapshots.xlsx"
 
-
 credential = DefaultAzureCredential()
 
 compute_client = ComputeManagementClient(credential,subscription_id)
 
 blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
-blob_client = blob_service_client.get_blob_client(container=container_name,blob=blob_name)
+container_client = blob_service_client.get_container_client(container_name)
 
-try:
-
-    with open(excel_file, "wb") as file:
-        download_stream = blob_client.download_blob()
-        file.write(download_stream.readall())
-    print("Old excel downloaded")
-except Exception:
-    print("No previous Excel found")
-
-if os.path.exists(excel_file):
-    final_dataframe = pd.read_excel(excel_file,engine="openpyxl")
-else:
-    final_dataframe = pd.DataFrame()
+blob_client = container_client.get_blob_client(blob_name)
 
 current_time = datetime.now(timezone.utc)
 
-snapshots = compute_client.snapshots.list()
+deleted_snapshot_data = []
 
-deleted_snapshots = []
+snapshots = compute_client.snapshots.list()
 
 for snapshot in snapshots:
 
@@ -58,25 +44,76 @@ for snapshot in snapshots:
     age_minutes = (current_time - creation_time).total_seconds() / 60
 
     if age_minutes > threshold_minutes:
-        print(f"Deleting {snapshot_name}")
-        delete_operation = compute_client.snapshots.begin_delete(resource_group,snapshot_name)
+
+        delete_operation = (compute_client.snapshots.begin_delete(resource_group,snapshot_name))
         delete_operation.wait()
-        deleted_snapshots.append({
+
+        print(f"Deleted Snapshot: {snapshot_name}")
+        deleted_snapshot_data.append({
+
             "Snapshot Name": snapshot_name,
+
             "Resource Group": resource_group,
-            "Creation Time": str(creation_time),
-            "Deleted Time": str(datetime.now(timezone.utc))
+
+            "Created Time": str(creation_time),
+
+            "Deleted Time": str(current_time),
+
         })
-        print(f"{snapshot_name} deleted")
 
+new_dataframe = pd.DataFrame(
+    deleted_snapshot_data
+)
 
-new_dataframe = pd.DataFrame(deleted_snapshots)
+try:
 
-final_dataframe = pd.concat([final_dataframe, new_dataframe],ignore_index=True)
+    with open(excel_file, "wb") as download_file:
 
-final_dataframe.to_excel(excel_file,index=False,engine="openpyxl")
+        download_stream = blob_client.download_blob()
+
+        download_file.write(
+            download_stream.readall()
+        )
+
+    old_dataframe = pd.read_excel(
+        excel_file,
+        engine="openpyxl"
+    )
+
+    print("Old Excel Loaded")
+
+except:
+
+    old_dataframe = pd.DataFrame()
+
+    print("No Previous Excel Found")
+
+final_dataframe = pd.concat(
+
+    [old_dataframe, new_dataframe],
+
+    ignore_index=True
+
+)
+
+final_dataframe.to_excel(
+
+    excel_file,
+
+    index=False,
+
+    engine="openpyxl"
+
+)
 
 with open(excel_file, "rb") as data:
-    blob_client.upload_blob(data,overwrite=True)
 
-print("Excel uploaded to Blob Storage")
+    blob_client.upload_blob(
+
+        data,
+
+        overwrite=True
+
+    )
+
+print("Excel Uploaded Successfully")
