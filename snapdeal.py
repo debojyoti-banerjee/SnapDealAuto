@@ -53,7 +53,6 @@ for snapshot in snapshots:
     for vm in virtual_machines:
 
         if (vm.storage_profile.os_disk and vm.storage_profile.os_disk.managed_disk):
-
             os_disk_id = (vm.storage_profile.os_disk.managed_disk.id)
             if os_disk_id == source_disk_id:
                 match_vm = vm
