@@ -5,6 +5,7 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.compute import ComputeManagementClient
 from azure.storage.blob import BlobServiceClient
 
+
 subscription_id = os.environ["SUBSCRIPTION_ID"]
 
 threshold_minutes = int(os.environ["THRESHOLD_MINUTES"])
@@ -21,13 +22,15 @@ credential = DefaultAzureCredential()
 
 compute_client = ComputeManagementClient(credential,subscription_id)
 
-blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+blob_service_client = (BlobServiceClient.from_connection_string(connection_string))
 
-container_client = blob_service_client.get_container_client(container_name)
+container_client = (blob_service_client.get_container_client(container_name))
 
-blob_client = container_client.get_blob_client(blob_name)
+blob_client = (container_client.get_blob_client(blob_name))
 
 current_time = datetime.now(timezone.utc)
+
+virtual_machines = (compute_client.virtual_machines.list_all())
 
 deleted_snapshot_data = []
 
@@ -43,77 +46,55 @@ for snapshot in snapshots:
 
     age_minutes = (current_time - creation_time).total_seconds() / 60
 
-    if age_minutes > threshold_minutes:
+    source_disk_id = (snapshot.creation_data.source_resource_id)
 
-        delete_operation = (compute_client.snapshots.begin_delete(resource_group,snapshot_name))
-        delete_operation.wait()
+    match_vm = None
 
-        print(f"Deleted Snapshot: {snapshot_name}")
-        deleted_snapshot_data.append({
+    for vm in virtual_machines:
 
-            "Snapshot Name": snapshot_name,
+        if (vm.storage_profile.os_disk and vm.storage_profile.os_disk.managed_disk):
 
-            "Resource Group": resource_group,
+            os_disk_id = (vm.storage_profile.os_disk.managed_disk.id)
+            if os_disk_id == source_disk_id:
+                match_vm = vm
+                break
 
-            "Created Time": str(creation_time),
+    if match_vm:
+        tags = match_vm.tags
+        if tags:
+            delete_tag = tags.get("delete_snapshot")
+            if (delete_tag == "true" and age_minutes > threshold_minutes):
+                delete_operation = (compute_client.snapshots.begin_delete(resource_group,snapshot_name))
+                delete_operation.wait()
+                print(f"{snapshot_name} deleted successfully")
+                deleted_snapshot_data.append({
+                    "Snapshot Name": snapshot_name,
+                    "Resource Group": resource_group,
+                    "VM Name": match_vm.name,
+                    "Created Time": str(creation_time),
+                    "Deleted Time": str(datetime.now(timezone.utc)),
+                })
 
-            "Deleted Time": str(current_time),
-
-        })
-
-new_dataframe = pd.DataFrame(
-    deleted_snapshot_data
-)
+new_dataframe = pd.DataFrame(deleted_snapshot_data)
 
 try:
-
     with open(excel_file, "wb") as download_file:
+        download_stream = (blob_client.download_blob())
+        download_file.write(download_stream.readall())
 
-        download_stream = blob_client.download_blob()
-
-        download_file.write(
-            download_stream.readall()
-        )
-
-    old_dataframe = pd.read_excel(
-        excel_file,
-        engine="openpyxl"
-    )
-
+    old_dataframe = pd.read_excel(excel_file,engine="openpyxl")
     print("Old Excel Loaded")
 
-except:
-
+except Exception:
     old_dataframe = pd.DataFrame()
-
     print("No Previous Excel Found")
 
-final_dataframe = pd.concat(
+final_dataframe = pd.concat([old_dataframe, new_dataframe],ignore_index=True)
 
-    [old_dataframe, new_dataframe],
-
-    ignore_index=True
-
-)
-
-final_dataframe.to_excel(
-
-    excel_file,
-
-    index=False,
-
-    engine="openpyxl"
-
-)
+final_dataframe.to_excel(excel_file,index=False,engine="openpyxl")
 
 with open(excel_file, "rb") as data:
+    blob_client.upload_blob(data,overwrite=True)
 
-    blob_client.upload_blob(
-
-        data,
-
-        overwrite=True
-
-    )
 
 print("Excel Uploaded Successfully")
