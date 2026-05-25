@@ -4,6 +4,8 @@ import pandas as pd
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.compute import ComputeManagementClient
 from azure.storage.blob import BlobServiceClient
+import smtplib
+from email.mime.text import MIMEText
 
 
 subscription_id = os.environ["SUBSCRIPTION_ID"]
@@ -11,6 +13,12 @@ subscription_id = os.environ["SUBSCRIPTION_ID"]
 threshold_minutes = int(os.environ["THRESHOLD_MINUTES"])
 
 connection_string = os.environ["AZURE_STORAGE_CONNECTION_STRING"]
+
+email_addr=os.environ["EMAIL_ADDRESS"]
+
+email_pass=os.environ["EMAIL_PASSWORD"]
+
+lead_email=os.environ["LEAD_EMAIL"]
 
 container_name = "reports"
 
@@ -73,6 +81,24 @@ for snapshot in snapshots:
                     "Created Time": str(creation_time),
                     "Deleted Time": str(datetime.now(timezone.utc)),
                 })
+                subject=f"Snapshot deleted {snapshot_name}"
+                body=f"""
+                Snapshot cleanup Alert
+                Snapshot name: {snapshot_name}
+                Resource Group Name: {resource_group}
+                VM Name: {match_vm}
+                Status: Deleted Successfullt
+                """
+                message=MIMEText(body)
+                message["Subject"]=subject
+                message["From"]=email_addr
+                message["To"]=lead_email
+                with smtplib.SMTP("smtp.gmail.com",587) as server:
+                    server.starttls()
+                    server.login(email_addr,email_pass)
+                    server.send_message(message)
+                    print("Email sent Successfully")
+
 
 new_dataframe = pd.DataFrame(deleted_snapshot_data)
 

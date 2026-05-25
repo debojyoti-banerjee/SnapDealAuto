@@ -17,6 +17,9 @@ jobs:
       SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
       THRESHOLD_MINUTES: ${{ secrets.THRESHOLD_MINUTES }}
       AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+      EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+      LEAD_EMAIL: ${{ secrets.LEAD_EMAIL }}
 
     steps:
 
