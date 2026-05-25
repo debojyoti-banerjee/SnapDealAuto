@@ -35,7 +35,7 @@ class SnapshotService:
                         delete_operation.wait()
                         print(f"{snapshot_name}deleted successfully")
                         email_service.send_email(
-                            lead_email
+                            lead_email,
                             snapshot_name,
                             match_vm.name
                             resource_group,
