@@ -27,7 +27,7 @@ snapshot_service=SnapshotService(compute_client,threshold_minutes)
 
 
 old_dataframe=storage_service.download_existing_excel()
-deleted_snapshot_data=snapshot_service.get_deleted_snapshots_data(virtual_machines,email_service)
+deleted_snapshot_data=snapshot_service.get_deleted_snapshots_data(virtual_machines,email_service,lead_email)
 new_dataframe=pd.DataFrame(deleted_snapshot_data)
 final_dataframe = pd.concat([old_dataframe, new_dataframe],ignore_index=True)
 storage_service.upload_excel(final_dataframe)

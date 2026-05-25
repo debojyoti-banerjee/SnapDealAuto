@@ -6,7 +6,7 @@ class SnapshotService:
         self.compute_client = compute_client
         self.threshold_minutes = threshold_minutes
 
-    def get_deleted_snapshots_data(self,virtual_machines,email_service):
+    def get_deleted_snapshots_data(self,virtual_machines,email_service,lead_email):
         current_time = datetime.now(timezone.utc)
         deleted_snapshot_data = []
         snapshots = self.compute_client.snapshots.list()
