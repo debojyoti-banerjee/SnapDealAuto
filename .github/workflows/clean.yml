@@ -1,11 +1,11 @@
 name: Azure Snapshot Deletion
 
 on:
-  push:
-    branches:
-      - main 
-  schedule:
-    - cron: "*/5 * * * *"
+  # push:
+  #   branches:
+  #     - main 
+  # schedule:
+  #   - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:

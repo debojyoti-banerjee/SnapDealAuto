@@ -23,4 +23,4 @@ class EmailService:
             server.starttls()
             server.login(self.email_address,self.email_password)
             server.send_message(message)
-            Print("Messaged send Successfully")
+            print("Messaged send Successfully")
