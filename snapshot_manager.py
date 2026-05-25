@@ -37,8 +37,8 @@ class SnapshotService:
                         email_service.send_email(
                             lead_email,
                             snapshot_name,
-                            match_vm.name
-                            resource_group,
+                            match_vm.name,
+                            resource_group
                         )
                         deleted_snapshot_data.append({
 
