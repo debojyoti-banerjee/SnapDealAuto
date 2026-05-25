@@ -22,7 +22,7 @@ class StorageService:
     def upload_excel(self,dataframe):
         dataframe.to_excel(self.excel_file,index=False,engine="openpyxl")
         with open(self.excel_file, "rb") as data:
-            blob_client.upload_blob(data,overwrite=True)
+            self.blob_client.upload_blob(data,overwrite=True)
             print("Excel file Uploaded successfully")
   
 
